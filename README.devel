@@ -1,0 +1,21 @@
+The broad aspect of the software:
+ - an editor
+ - a project/file browser
+ - symbol browser
+ - project builder
+ - interactive debugger
+ - code suggest
+ - code examples and reference to existing documentation ( like man pages )
+
+
+
+User Interface Shell
+
+UiShell is like a canvas where you draw all your interfaces. It should provide
+support for plugging in the various kinds of user interfaces.
+
+Ui is attached as one of the following:
+ - a dock
+ - a dialog
+
+TODO: Add more info here.
