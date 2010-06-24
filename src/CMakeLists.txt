@@ -14,6 +14,9 @@ add_executable(armstrong_ide # name of the executable on Windows will be example
     main.cc 
     ui-shell.cc 
     ui-shell.h
+    IEditorArea.h
+    EditorArea.h
+    EditorArea.cpp
     )
 
 target_link_libraries(armstrong_ide

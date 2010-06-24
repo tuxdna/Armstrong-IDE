@@ -26,102 +26,83 @@
 #define ABOUT_UI_FILE "src/about.ui"
 #include <iostream>
 
-static Gtk::Widget * getScrolledEditor(std::string filename)
-{
-	Gtk::ScrolledWindow *scrolled_window = new Gtk::ScrolledWindow();
+UiShell *UiShell::singleton_instance = 0;
 
-	gtksourceview::init();
-	gtksourceview::SourceView *svptr = new gtksourceview::SourceView();
-	Glib::RefPtr<gtksourceview::SourceView> sv(svptr);
-	Glib::RefPtr<gtksourceview::SourceBuffer> buffer = sv->get_source_buffer();
-
-	if (!buffer)
-	{
-		std::cerr << "creating a new buffer\n";
-		buffer = gtksourceview::SourceBuffer::create();
-		sv->set_buffer(buffer);
+UiShell * UiShell::getInstance() {
+	if (!singleton_instance) {
+		singleton_instance = new UiShell;
 	}
+	return singleton_instance;
+}
 
-	if(filename.length() > 0) {
-		std::string file_contents = Glib::file_get_contents(filename);
-		buffer->set_text(file_contents);
-	} else {
-		// empty buffer
-	}
+UiShell::UiShell() {
+	shell_ui_widget = 0;
+	dock = 0;
+	editor_area = 0;
+}
 
-	Glib::RefPtr<gtksourceview::SourceLanguageManager> lm =
-			gtksourceview::SourceLanguageManager::get_default();
-	Glib::RefPtr<gtksourceview::SourceLanguage> lang;
+Gtk::Widget *UiShell::getShellUi() {
+	return shell_ui_widget;
+}
 
-	bool result_uncertain = FALSE;
-	Glib::ustring content_type;
 
-	content_type = Gio::content_type_guess(filename, 0, 0, result_uncertain);
-	if (result_uncertain)
-	{
-		content_type.clear();
-	}
+void UiShell::initialize() {
 
-	lang = lm->guess_language(filename, content_type);
+	Glib::RefPtr<Gtk::Builder> mainRefBuilder = Gtk::Builder::create_from_file(
+			MAIN_UI_FILE);
 
-	buffer->set_language(lang);
+	// std::cout << mainRefBuilder << std::endl;
 
-	svptr->set_show_line_numbers(true);
-	svptr->set_show_right_margin(true);
-	scrolled_window->add(*svptr);
-	return scrolled_window;
+	initializeUiInternals(mainRefBuilder);
+
+	// connect menu item signals
+	Gtk::ImageMenuItem *image_menu_item_open;
+	mainRefBuilder->get_widget("imagemenuitem_open", image_menu_item_open);
+
+	image_menu_item_open ->signal_activate() .connect(sigc::mem_fun(*this,
+			&UiShell::openFile));
+
+	Gtk::ImageMenuItem *image_menu_item_quit;
+	mainRefBuilder->get_widget("imagemenuitem_quit", image_menu_item_quit);
+
+	image_menu_item_quit ->signal_activate() .connect(sigc::ptr_fun(
+			&Gtk::Main::quit));
 
 }
 
-static Gtk::Widget * getEditorUi()
-{
-	Gtk::Notebook * notebook = new Gtk::Notebook();
-	Gtk::Widget * scrolled_editor = 0;
-	std::string filename;
 
-	filename = "/usr/include/stdlib.h";
-	Glib::RefPtr<Gio::File> file = Gio::File::create_for_path(filename);
-
-	scrolled_editor = getScrolledEditor(file->get_path());
-	notebook->append_page(*scrolled_editor, file->get_basename());
-
-	filename = "/usr/bin/yum";
-	file = Gio::File::create_for_path(filename);
-
-	scrolled_editor = getScrolledEditor(file->get_path());
-	notebook->append_page(*scrolled_editor, file->get_basename());
-
-	scrolled_editor = getScrolledEditor("");
-	notebook->append_page(*scrolled_editor, "Untitled 1");
-
-	return notebook;
-}
-
-static Gtk::Widget * getShellUi(Glib::RefPtr<Gtk::Builder> &mainRefBuilder)
-{
-
-
+void UiShell::initializeUiInternals(Glib::RefPtr<Gtk::Builder> &mainRefBuilder) {
 	Gtk::VBox *vbox = 0;
 	mainRefBuilder->get_widget("vbox_main_outer", vbox);
 
-	if (!vbox)
-	{
+	if (!vbox) {
 		std::cerr << "main widget initialization failed!" << std::endl;
-		return 0;
+		return;
 	}
 
-	Gtk::Widget *editor_widget = getEditorUi();
+	shell_ui_widget = vbox;
 
-	GtkWidget *dock = gdl_dock_new();
+	dock = gdl_dock_new();
 	GdlDockLayout *layout = gdl_dock_layout_new(GDL_DOCK (dock));
 	GtkWidget *dockbar = gdl_dock_bar_new(GDL_DOCK (dock));
 	gdl_dock_bar_set_style(GDL_DOCK_BAR(dockbar), GDL_DOCK_BAR_TEXT);
 
+	vbox->pack_start(*Glib::wrap(dock));
+}
+
+void UiShell::addEditorArea(IEditorArea *editor_area) {
+
+	this->editor_area = editor_area;
 	/*
 	 * Create an editor dock on the right side
 	 */
 	GtkWidget *editor_dock_item = gdl_dock_item_new("editor_dock_item",
 			"Editor", GDL_DOCK_ITEM_BEH_NORMAL);
+
+	// Gtk::Widget *editor_widget = getEditorUi();
+	Gtk::Widget *editor_widget = this->editor_area->getUi();
+
+	std::cerr << editor_widget << std::endl;
 
 	gtk_container_add(GTK_CONTAINER(editor_dock_item), GTK_WIDGET(
 			editor_widget->gobj()));
@@ -130,6 +111,9 @@ static Gtk::Widget * getShellUi(Glib::RefPtr<Gtk::Builder> &mainRefBuilder)
 
 	gtk_widget_show(editor_dock_item);
 
+}
+
+void UiShell::addProjectManager() {
 	Gtk::ScrolledWindow *scrolled_window = 0;
 
 	/*
@@ -146,6 +130,11 @@ static Gtk::Widget * getShellUi(Glib::RefPtr<Gtk::Builder> &mainRefBuilder)
 
 	gtk_widget_show(projects_dock_item);
 
+}
+
+void UiShell::addProperties() {
+	Gtk::ScrolledWindow *scrolled_window = 0;
+
 	/*
 	 * Create a properties dock on the left side
 	 */
@@ -161,56 +150,42 @@ static Gtk::Widget * getShellUi(Glib::RefPtr<Gtk::Builder> &mainRefBuilder)
 
 	gtk_widget_show(properties_dock_item);
 
-	vbox->pack_start(*Glib::wrap(dock));
-
-	return vbox;
 }
 
-UiShell * UiShell::getInstance()
-{
-	if (!singleton_instance)
-	{
-		singleton_instance = new UiShell;
-	}
-	return singleton_instance;
-}
+////////////////////////////////////////////////////////////////////////////////
+// Define signals here
+////////////////////////////////////////////////////////////////////////////////
 
-UiShell::UiShell()
-{
-
-}
 
 void UiShell::openFile() {
 	std::cout << "open file" << std::endl;
 	Gtk::FileChooserAction action = Gtk::FILE_CHOOSER_ACTION_OPEN;
-	Gtk::FileChooserDialog *d =
-			new Gtk::FileChooserDialog("Open file", action, "");
-	d->show_all();
+	Gtk::FileChooserDialog dialog("Open file", action, "");
+
+	Gtk::FileChooserDialog * d = &dialog;
+
+	d->add_button(Gtk::Stock::CANCEL, Gtk::RESPONSE_CANCEL);
+	d->add_button(Gtk::Stock::OPEN, Gtk::RESPONSE_OK);
+
+	// d->set_transient_for(*this);
+	int result = d->run();
+	switch (result) {
+	case (Gtk::RESPONSE_OK): {
+		std::cout << "Open clicked." << std::endl;
+
+		//Notice that this is a std::string, not a Glib::ustring.
+		std::string filename = d->get_filename();
+		std::cout << "File selected: " << filename << std::endl;
+		editor_area->openFile(filename);
+		break;
+	}
+	case (Gtk::RESPONSE_CANCEL): {
+		std::cout << "Cancel clicked." << std::endl;
+		break;
+	}
+	default: {
+		std::cout << "Unexpected button clicked." << std::endl;
+		break;
+	}
+	}
 }
-
-Gtk::Widget *UiShell::getShellUi()
-{
-	Glib::RefPtr<Gtk::Builder> mainRefBuilder =
-			Gtk::Builder::create_from_file(MAIN_UI_FILE);
-
-	Gtk::Widget *ui_widget = ::getShellUi(mainRefBuilder);
-
-	std::cout << mainRefBuilder << std::endl;
-
-	Gtk::ImageMenuItem *image_menu_item_open;
-	mainRefBuilder->get_widget("imagemenuitem_open", image_menu_item_open);
-
-    image_menu_item_open ->signal_activate()
-      .connect( sigc::mem_fun(*this, &UiShell::openFile) );
-
-
-	Gtk::ImageMenuItem *image_menu_item_quit;
-	mainRefBuilder->get_widget("imagemenuitem_quit", image_menu_item_quit);
-
-    image_menu_item_quit ->signal_activate()
-		.connect( sigc::ptr_fun(&Gtk::Main::quit ) );
-	return ui_widget;
-}
-
-UiShell *UiShell::singleton_instance = 0;
-
