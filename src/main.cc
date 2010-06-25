@@ -3,6 +3,7 @@
 #include "ui-shell.h"
 
 #include "EditorArea.h"
+#include <gtksourceviewmm.h>
 
 int main (int argc, char **argv)
 {
@@ -10,6 +11,7 @@ int main (int argc, char **argv)
   Gtk::Main::init_gtkmm_internals();
   Gtk::Window window;
   Gtk::VBox vbox;
+  gtksourceview::init();
 
 
   UiShell *uishell = UiShell::getInstance();

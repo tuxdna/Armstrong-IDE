@@ -10,13 +10,18 @@ include_directories(
     ${GDL_INCLUDE_DIRS}
     )
 
-add_executable(armstrong_ide # name of the executable on Windows will be example.exe 
+add_executable(armstrong_ide # name of the executable on Windows will be armstrong_ide.exe 
     main.cc 
     ui-shell.cc 
     ui-shell.h
     IEditorArea.h
     EditorArea.h
     EditorArea.cpp
+    Iterable.h
+    IProvider.h
+    IEditor.h
+    Editor.h
+    Editor.cpp
     )
 
 target_link_libraries(armstrong_ide
