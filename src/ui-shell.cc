@@ -19,11 +19,12 @@
 
 #include <gtksourceviewmm.h>
 #include <gdl/gdl.h>
+#include <vector>
 
 #include "ui-shell.h"
 
 #define MAIN_UI_FILE "src/armstrong_ide2.ui"
-#define ABOUT_UI_FILE "src/about.ui"
+#define MAIN_LOGO_FILE "src/main-logo.gif"
 #include <iostream>
 
 UiShell *UiShell::singleton_instance = 0;
@@ -44,7 +45,6 @@ UiShell::UiShell() {
 Gtk::Widget *UiShell::getShellUi() {
 	return shell_ui_widget;
 }
-
 
 void UiShell::initialize() {
 
@@ -68,8 +68,12 @@ void UiShell::initialize() {
 	image_menu_item_quit ->signal_activate() .connect(sigc::ptr_fun(
 			&Gtk::Main::quit));
 
-}
+	Gtk::ImageMenuItem *image_menu_item_about;
+	mainRefBuilder->get_widget("imagemenuitem_about", image_menu_item_about);
 
+	image_menu_item_about ->signal_activate() .connect(sigc::mem_fun(*this,
+			&UiShell::showAboutDialog));
+}
 
 void UiShell::initializeUiInternals(Glib::RefPtr<Gtk::Builder> &mainRefBuilder) {
 	Gtk::VBox *vbox = 0;
@@ -153,7 +157,7 @@ void UiShell::addProperties() {
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-// Define signals here
+// Define callbacks here
 ////////////////////////////////////////////////////////////////////////////////
 
 
@@ -189,3 +193,25 @@ void UiShell::openFile() {
 	}
 	}
 }
+
+void UiShell::showAboutDialog() {
+	std::cout << "about button clicked" << std::endl;
+	Gtk::AboutDialog ad;
+
+	std::vector<Glib::ustring> authors;
+	authors.push_back("Saleem Ansari <tuxdna@gmail.com>");
+	ad.set_name("Armstrong IDE");
+	ad.set_version("0.1");
+	ad.set_comments("Comments line.");
+	ad.set_copyright("See COPYING file in the source distribution.");
+	ad.set_website("http://github.com/tuxdna/Armstrong-IDE");
+	ad.set_authors(authors);
+	ad.set_translator_credits("N/A");
+
+	Glib::RefPtr<Gdk::Pixbuf> pixbuf = Gdk::Pixbuf::create_from_file(
+			MAIN_LOGO_FILE);
+	ad.set_logo(pixbuf);
+
+	ad.run();
+}
+

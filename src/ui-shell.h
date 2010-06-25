@@ -47,6 +47,7 @@ private:
 	GtkWidget *dock;
 	IEditorArea *editor_area;
 	void initializeUiInternals(Glib::RefPtr<Gtk::Builder>&);
+	void showAboutDialog();
 };
 
 #endif // _UI_SHELL_H_
