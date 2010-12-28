@@ -62,6 +62,19 @@ void UiShell::initialize() {
 	image_menu_item_open ->signal_activate() .connect(sigc::mem_fun(*this,
 			&UiShell::openFile));
 
+	Gtk::ImageMenuItem *image_menu_item_new;
+	mainRefBuilder->get_widget("imagemenuitem_new", image_menu_item_new);
+
+	image_menu_item_new ->signal_activate() .connect(sigc::mem_fun(*this,
+			&UiShell::newFile));
+
+	Gtk::ImageMenuItem *image_menu_item_save;
+	mainRefBuilder->get_widget("imagemenuitem_save", image_menu_item_save);
+
+	image_menu_item_save ->signal_activate() .connect(sigc::mem_fun(*this,
+			&UiShell::saveFile));
+
+
 	Gtk::ImageMenuItem *image_menu_item_quit;
 	mainRefBuilder->get_widget("imagemenuitem_quit", image_menu_item_quit);
 
@@ -105,8 +118,6 @@ void UiShell::addEditorArea(IEditorArea *editor_area) {
 
 	// Gtk::Widget *editor_widget = getEditorUi();
 	Gtk::Widget *editor_widget = this->editor_area->getUi();
-
-	std::cerr << editor_widget << std::endl;
 
 	gtk_container_add(GTK_CONTAINER(editor_dock_item), GTK_WIDGET(
 			editor_widget->gobj()));
@@ -166,19 +177,17 @@ void UiShell::openFile() {
 	Gtk::FileChooserAction action = Gtk::FILE_CHOOSER_ACTION_OPEN;
 	Gtk::FileChooserDialog dialog("Open file", action, "");
 
-	Gtk::FileChooserDialog * d = &dialog;
-
-	d->add_button(Gtk::Stock::CANCEL, Gtk::RESPONSE_CANCEL);
-	d->add_button(Gtk::Stock::OPEN, Gtk::RESPONSE_OK);
+	dialog.add_button(Gtk::Stock::CANCEL, Gtk::RESPONSE_CANCEL);
+	dialog.add_button(Gtk::Stock::OPEN, Gtk::RESPONSE_OK);
 
 	// d->set_transient_for(*this);
-	int result = d->run();
+	int result = dialog.run();
 	switch (result) {
 	case (Gtk::RESPONSE_OK): {
 		std::cout << "Open clicked." << std::endl;
 
 		//Notice that this is a std::string, not a Glib::ustring.
-		std::string filename = d->get_filename();
+		std::string filename = dialog.get_filename();
 		std::cout << "File selected: " << filename << std::endl;
 		editor_area->openFile(filename);
 		break;
@@ -192,6 +201,16 @@ void UiShell::openFile() {
 		break;
 	}
 	}
+}
+
+void UiShell::newFile() {
+	std::cout << "new file" << std::endl;
+	editor_area->newFile();
+}
+
+void UiShell::saveFile() {
+	std::cout << "save file" << std::endl;
+	editor_area->saveFile();
 }
 
 void UiShell::showAboutDialog() {

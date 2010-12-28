@@ -16,35 +16,24 @@
  * with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef EDITORAREA_H_
-#define EDITORAREA_H_
-
-#include "IEditorArea.h"
+#include <gtkmm.h>
+#include <string>
 #include "IEditor.h"
 #include "Editor.h"
-#include <map>
-
+#include "EditorFactory.h"
 namespace armstrong {
 
-typedef std::map<int, IEditor*> editors_container;
+EditorFactory::EditorFactory() {
+	// default constructor
+}
 
-class EditorArea: public IEditorArea {
-public:
-	EditorArea();
-	virtual ~EditorArea();
-	void openFile(std::string&);
-	void newFile();
-	void saveFile();
-	Gtk::Widget *getUi();
+EditorFactory::~EditorFactory() {
+	// default destructor
+}
 
-private:
-	Gtk::Notebook* _notebook;
-	int addEditor(Editor*);
-	void removeEditor();
-
-	editors_container editors;
-
-};
+IEditor* EditorFactory::create(std::string filename, std::string tablabel) {
+	// std::string filename = "";
+	return new Editor(filename, tablabel);
+}
 
 }
-#endif /* EDITORAREA_H_ */

@@ -34,6 +34,8 @@ public:
 	void addWidget(Gtk::Widget*);
 	Gtk::Widget *getShellUi();
 	void openFile();
+	void newFile();
+	void saveFile();
 	void initialize();
 	void addEditorArea(IEditorArea *);
 	void addProjectManager();

@@ -22,9 +22,13 @@
 
 namespace armstrong {
 
-static void modified_callback() {
+void Editor::modified_callback() {
 	std::cerr << "buffer modified" << std::endl;
+	set_buffer_dirty(true);
 
+	std::string newlabel = this->editor_tab->getLabel();
+	newlabel = newlabel + "*";
+	this->editor_tab->setLabel(newlabel);
 }
 
 Gtk::Widget* Editor::getUi() {
@@ -39,10 +43,14 @@ void Editor::createScrolledEditor(std::string& filename) {
 	this->sv = Glib::RefPtr<gtksourceview::SourceView>(svptr);
 	this->buffer = sv->get_source_buffer();
 
+	lang = gtksourceview::SourceLanguage::create();
+
 	if (!buffer) {
 		std::cerr << "creating a new buffer\n";
-		buffer = gtksourceview::SourceBuffer::create();
+		buffer = gtksourceview::SourceBuffer::create(lang);
 		sv->set_buffer(buffer);
+	} else {
+		buffer->set_language(lang);
 	}
 
 	if (filename.length() > 0) {
@@ -60,9 +68,8 @@ void Editor::createScrolledEditor(std::string& filename) {
 		content_type.clear();
 	}
 
-	lang = lm->guess_language(filename, content_type);
-
-	buffer->set_language(lang);
+	//lang = lm->guess_language(filename, content_type);
+	//buffer->set_language(lang);
 
 	svptr->set_show_line_numbers(true);
 	svptr->set_show_right_margin(true);
@@ -70,11 +77,16 @@ void Editor::createScrolledEditor(std::string& filename) {
 
 	scrolled_window->show_all();
 
-	buffer->signal_changed().connect(sigc::ptr_fun(&modified_callback));
+	//buffer->signal_changed().connect(sigc::ptr_fun(&modified_callback));
+	buffer->signal_changed().connect(sigc::mem_fun(*this, &Editor::modified_callback));
 }
 
 std::string Editor::getFilename() {
 	return this->filename;
+}
+
+void Editor::setFilename(std::string f) {
+	this->filename = f;
 }
 
 /* Editor::Editor() {
@@ -83,8 +95,25 @@ std::string Editor::getFilename() {
  }
  */
 
-Editor::Editor(std::string& filename) {
+bool Editor::is_buffer_dirty() {
+	return buffer_dirty;
+}
+
+void Editor::set_buffer_dirty(bool v){
+	buffer_dirty = v;
+}
+
+EditorTab *Editor::get_editor_tab() {
+	return editor_tab;
+}
+
+Editor::Editor(std::string filename, std::string label){
+	std::cout << filename << std::endl;
+	setFilename(filename);
+	std::cout << getFilename() << std::endl;
 	createScrolledEditor(filename);
+	set_buffer_dirty(false);
+	editor_tab = new EditorTab(label);
 }
 
 Editor::~Editor() {

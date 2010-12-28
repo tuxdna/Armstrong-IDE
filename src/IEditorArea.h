@@ -21,6 +21,7 @@
 
 #include <gtkmm.h>
 #include <string>
+#include <list>
 
 class IEditorArea {
 public:
@@ -28,6 +29,8 @@ public:
 	virtual ~IEditorArea() {};
 
 	virtual void openFile(std::string&) = 0;
+	virtual void newFile() = 0;
+	virtual void saveFile() = 0;
 	virtual Gtk::Widget *getUi() = 0;
 
 };

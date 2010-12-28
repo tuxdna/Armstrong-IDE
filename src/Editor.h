@@ -26,18 +26,59 @@
 
 namespace armstrong {
 
+class EditorTab {
+private:
+	Gtk::HBox *hbox;
+	Gtk::Label *label;
+	Gtk::Button *button;
+	Gtk::Image *i;
+
+public:
+	EditorTab(std::string tabtitle) {
+		hbox = new Gtk::HBox();
+		label = new Gtk::Label(tabtitle);
+		button = new Gtk::Button();
+		i = new Gtk::Image(Gtk::Stock::CLOSE, Gtk::ICON_SIZE_MENU);
+		button->set_image(*i);
+		hbox->add(*label);
+		hbox->add(*button);
+		hbox->set_homogeneous(false);
+		hbox->show_all();
+	}
+
+	Gtk::Widget & getUi() {
+		return *hbox;
+	}
+
+	~EditorTab() {
+		delete hbox;
+		delete label;
+		delete button;
+		delete i;
+	}
+
+	void setLabel(std::string new_label) {
+		label->set_text(new_label);
+	}
+
+	std::string getLabel() {
+		return label->get_text();
+	}
+};
+
 class Editor: public IEditor {
 public:
 	// Editor();
-	Editor(std::string& filename);
+	Editor(std::string filename, std::string tablabel);
 	virtual ~Editor();
 
-	std::string getFilename();
 
 	///////////////////////////////////////////////////////////////
 	// IEditor methods begin
 	///////////////////////////////////////////////////////////////
 	Gtk::Widget * getUi();
+	std::string getFilename();
+	void setFilename(std::string);
 	gint get_tabsize();
 	void set_tabsize(gint tabsize);
 	gboolean get_use_spaces();
@@ -68,6 +109,10 @@ public:
 	Iterable* get_start_position();
 	Iterable* get_end_position();
 
+	bool is_buffer_dirty();
+	void set_buffer_dirty(bool);
+	void modified_callback();
+	EditorTab *get_editor_tab();
 private:
 	Gtk::ScrolledWindow *scrolled_window;
 	gtksourceview::SourceView *svptr;
@@ -77,7 +122,8 @@ private:
 	Glib::RefPtr<gtksourceview::SourceLanguage> lang;
 	Glib::ustring content_type;
 	std::string filename;
-
+	bool buffer_dirty;
+	EditorTab *editor_tab;
 
 	void createScrolledEditor(std::string& filename);
 };

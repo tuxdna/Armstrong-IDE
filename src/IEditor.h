@@ -62,6 +62,7 @@ public:
 		TEXT, KEYWORD, COMMENT, STRING
 	};
 
+
 	/**
 	 * @position: The iter position where @ch is added.
 	 * @ch: The character that has been added.
@@ -106,6 +107,8 @@ public:
 	sigc::signal<void, gint> line_marks_gutter_clicked;
 
 	virtual Gtk::Widget * getUi() = 0;
+	virtual std::string getFilename() = 0;
+	virtual void setFilename(std::string) = 0;
 
 	/**
 	 * Returns the tabsize (in spaces) currently used by the editor.

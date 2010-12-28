@@ -5,6 +5,8 @@
 #include "EditorArea.h"
 #include <gtksourceviewmm.h>
 
+using namespace armstrong;
+
 int main (int argc, char **argv)
 {
   Gtk::Main kit(argc, argv);
